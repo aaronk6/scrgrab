@@ -9,12 +9,12 @@ uses
 var
   DeskDC: HDC;
   Bitmap: TBitmap;
-  fs: TFileStream;
+  fs, sStream: TFileStream;
   infile: string;
   outfile: string;
   http_res: string;
 const
-  bmppath: string = 'C:\httpd\htdocs\scrgrab.bmp';
+  bmppath: string = 'C:\scrgrab.tmp';
 begin
   if ParamCount <> 3 then
   begin
@@ -36,11 +36,16 @@ begin
   Bitmap.SaveToFile(bmppath);
   Bitmap.Free;
 
-  http_res := 'HTTP/1.0 302 Found' + #13#10
-           + 'Location: /scrgrab.bmp' + #13#10#13#10;
+  http_res := 'HTTP/1.0 200 OK' + #13#10 +
+           'Content-Type: image/bmp' + #13#10#13#10;
   fs := TFileStream.Create(outfile, fmCreate or fmOpenWrite);
   fs.Write(http_res[1], Length(http_res));
+
+  sStream := TFileStream.Create(bmppath, fmOpenRead);
+  fs.CopyFrom(sStream, 0);
+  sStream.Free;
   fs.Free;
+  DeleteFile(bmppath);
 
   Application.CreateForm(TForm1, Form1);
   Application.Run;
